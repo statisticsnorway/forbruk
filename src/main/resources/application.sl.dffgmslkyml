@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: ForbrukProduktApplication
+config:
+    location: /opt/forbruk/props/environment.config
+server:
+  servlet:
+    context-path: /forbruk-api
+  port: 8083
+logging:
+  level:
+    root: WARN
+    no:
+      ssb:
+        api: INFO
+  file:
+    name: /var/log/forbruk/forbruk.log
+
+forbruk:
+  filepath:
+    codes: /opt/forbruk/config
+    result:
+      folder: /opt/forbruk/result
+      fileprefix: forbruk_vetduat_
+
+api-keys: ${FORBRUK_API_KEY}
+
+---
+
+spring:
+  profiles: dev
+config:
+    location: c:\\var\\appdata\\forbruk\\props\\environment.config
+logging:
+  file:
+    name: c:\\var\\log\\forbruk\\forbruk.log
+
+forbruk:
+  filepath:
+    codes: c:\\var\\appdata\\forbruk\\config
+    result:
+      folder: c:\\var\\appdata\\forbruk\\result
