@@ -4,10 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import no.ssb.api.forbruk.repository.SsbVetduatRestRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -15,14 +17,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.nio.file.Files.*;
+import static java.nio.file.Files.walk;
 
 /**
  * Created by rsa on 29.04.2019.
@@ -36,31 +39,32 @@ public class ForbrukService {
     @Autowired
     SsbVetduatRestRepository ssbVetduatRestRepository;
 
+    @Value("${resultat.fjern.element}")
+    String removeElements;
 
     final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-hh-mm-ss");
+
     public String retrieveProductInformation(String codefilesPath, String resultFileDir, String resultFilePrefix, String resultFilePostfix) {
+        Instant start = Instant.now();
         log.info("*** start retrieve product information ***");
-
-        log.info("hent alle filer i {}", codefilesPath);
-
-        log.info("løp gjennom alle filene");
+        log.info("løp gjennom alle filene i {}", codefilesPath);
         try(Stream<Path> walk = walk(Paths.get(codefilesPath))) {
             walk.filter(Files::isRegularFile)
                     .forEach(f -> {
                         Path resultFile = createProduktInfoFile(f.getFileName().toString(), resultFileDir, resultFilePrefix, resultFilePostfix);
                         ArrayList<String> fileCodeList = getCodesFromFile(f);
                         ArrayNode produkter = mapper.createArrayNode();
-                        fileCodeList.stream().forEach(codes -> {
+//                        fileCodeList.parallelStream().forEach(codes -> {
+                          //parallelStream øker ikke hastighet
+                        fileCodeList.forEach(codes -> {
                             log.info("codes from file: {}", codes);
                             String produktInfo = ssbVetduatRestRepository.callSsbVetDuAt(codes);
                             try {
                                 JsonNode produktListe = mapper.readTree(produktInfo);
                                 if (produktListe.isArray()) {
-                                    produktListe.forEach(p -> produkter.add(p));
-                                    log.info("(a) antall produkt: {}", produkter.size());
+                                    produktListe.forEach(p -> produkter.add(removeUnnecessary(p, removeElements)));
                                 } else {
-                                    produkter.add(produktListe);
-                                    log.info("(b) antall produkt: {}", produkter.size());
+                                    produkter.add(removeUnnecessary(produktListe, removeElements));
                                 }
                             } catch (JsonProcessingException e) {
                                 e.printStackTrace();
@@ -74,7 +78,22 @@ public class ForbrukService {
         } catch (IOException ioe) {
             log.error("Something wrong reading files from {}, {}", codefilesPath, ioe.getMessage());
         }
+        log.info("ferdig behandlet {} , brukt tid: {}", codefilesPath, Duration.between(start, Instant.now()).toMillis());
+
         return "OK";
+    }
+
+    private JsonNode removeUnnecessary(JsonNode node, String removeElements) {
+        if (removeElements != null && removeElements.length() > 0) {
+            Arrays.asList(removeElements.split(",")).forEach(element -> {
+                if (node.isArray()) {
+                    node.forEach(n -> ((ObjectNode) n).remove(element));
+                } else {
+                    ((ObjectNode) node).remove(element);
+                }
+            });
+        }
+        return node;
     }
 
     private Path createProduktInfoFile(String codefileName, String resultFileDir, String resultFilePrefix, String resultFilePostfix) {
@@ -107,8 +126,8 @@ public class ForbrukService {
                 log.info("line: {}", line);
                 String[] linecodes = line.replace(";", ",").split(",");
                 Arrays.parallelSetAll(linecodes, (i) -> linecodes[i].trim());
-                Arrays.asList(linecodes).stream().forEach(c -> log.info("  code: {}.", c));
-                allCodes.add(Arrays.asList(linecodes).stream().collect(Collectors.joining(",")));
+                Arrays.asList(linecodes).parallelStream().forEach(c -> log.info("  code: {}.", c));
+                allCodes.add(String.join(",", linecodes));
             });
             log.info("({}) allCodes: {}", f.getFileName().toString(), allCodes);
         } catch (IOException e) {
