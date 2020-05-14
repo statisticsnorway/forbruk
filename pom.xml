@@ -11,8 +11,8 @@
     <properties>
         <java.version>14</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>14</maven.compiler.source>
-        <maven.compiler.target>14</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <spring-boot-starter.version>2.2.6.RELEASE</spring-boot-starter.version>
         <swagger.core.version>2.5.0</swagger.core.version>
         <org.json.version>20190722</org.json.version>
