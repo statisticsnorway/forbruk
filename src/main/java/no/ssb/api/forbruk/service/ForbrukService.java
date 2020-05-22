@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.Instant;
@@ -39,54 +40,63 @@ public class ForbrukService {
     @Autowired
     SsbVetduatRestRepository ssbVetduatRestRepository;
 
-    @Value("${resultat.fjern.element}")
-    String removeElements;
-
     final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-hh-mm-ss");
 
-    public String retrieveProductInformation(String codefilesPath, String resultFileDir, String resultFilePrefix, String resultFilePostfix) {
+    public String retrieveProductInformation(String codefilesPath, String resultFileDir, String resultFilePrefix,
+                                             String resultFilePostfix, String removeElements, String handledFileDir) {
         Instant start = Instant.now();
         log.info("*** start retrieve product information ***");
         log.info("løp gjennom alle filene i {}", codefilesPath);
+        log.info("fjern {}", removeElements);
+        log.info("flytt filer til {}", handledFileDir);
         try(Stream<Path> walk = walk(Paths.get(codefilesPath))) {
             walk.filter(Files::isRegularFile)
-                    .forEach(f -> {
-                        Path resultFile = createProduktInfoFile(f.getFileName().toString(), resultFileDir, resultFilePrefix, resultFilePostfix);
-                        ArrayList<String> fileCodeList = getCodesFromFile(f);
-                        ArrayNode produkter = mapper.createArrayNode();
-//                        fileCodeList.parallelStream().forEach(codes -> {
-                          //parallelStream øker ikke hastighet
-                        fileCodeList.forEach(codes -> {
-                            log.info("codes from file: {}", codes);
-                            String produktInfo = ssbVetduatRestRepository.callSsbVetDuAt(codes);
-                            try {
-                                JsonNode produktListe = mapper.readTree(produktInfo);
-                                if (produktListe.isArray()) {
-                                    produktListe.forEach(p -> produkter.add(removeUnnecessary(p, removeElements)));
-                                } else {
-                                    produkter.add(removeUnnecessary(produktListe, removeElements));
-                                }
-                            } catch (JsonProcessingException e) {
-                                e.printStackTrace();
-                                log.error("Noe gikk galt under konvertering av " + produktInfo);
-                            }
-                        });
-                        log.info("til fil - antall produkt: {}", produkter.size());
-                        addToProduktInfoFile(produkter, resultFile);
+                    .forEach(file -> {
+                        treatFile(resultFileDir, resultFilePrefix, resultFilePostfix, file, removeElements);
+                        move(file, handledFileDir);
                     });
 
         } catch (IOException ioe) {
             log.error("Something wrong reading files from {}, {}", codefilesPath, ioe.getMessage());
         }
-        log.info("ferdig behandlet {} , brukt tid: {}", codefilesPath, Duration.between(start, Instant.now()).toMillis());
+        log.info("ferdig behandlet {} , brukt tid: {} millisek", codefilesPath, Duration.between(start, Instant.now()).toMillis());
 
         return "OK";
+    }
+
+    private void treatFile(String resultFileDir, String resultFilePrefix, String resultFilePostfix, Path f, String removeElements) {
+        Path resultFile = createProduktInfoFile(f.getFileName().toString(), resultFileDir, resultFilePrefix, resultFilePostfix);
+        ArrayList<String> fileCodeList = getCodesFromFile(f);
+        ArrayNode produkter = mapper.createArrayNode();
+//                        fileCodeList.parallelStream().forEach(codes -> {
+        //parallelStream øker ikke hastighet
+        fileCodeList.forEach(codes -> {
+            log.info("codes from file: {}", codes);
+            collectProductInformationForCodes(produkter, codes, removeElements);
+        });
+        log.info("til fil - antall produkt: {}", produkter.size());
+        addToProduktInfoFile(produkter, resultFile);
+    }
+
+    private void collectProductInformationForCodes(ArrayNode produkter, String codes, String removeElements) {
+        String produktInfo = ssbVetduatRestRepository.callSsbVetDuAt(codes);
+        try {
+            JsonNode produktListe = mapper.readTree(produktInfo);
+            if (produktListe.isArray()) {
+                produktListe.forEach(p -> produkter.add(removeUnnecessary(p, removeElements)));
+            } else {
+                produkter.add(removeUnnecessary(produktListe, removeElements));
+            }
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            log.error("Noe gikk galt under konvertering av " + produktInfo);
+        }
     }
 
     private JsonNode removeUnnecessary(JsonNode node, String removeElements) {
         if (removeElements != null && removeElements.length() > 0) {
             Arrays.asList(removeElements.split(",")).forEach(element -> {
-                if (node.isArray()) {
+                if (node.isArray() && !node.isEmpty()) {
                     node.forEach(n -> ((ObjectNode) n).remove(element));
                 } else {
                     ((ObjectNode) node).remove(element);
@@ -135,4 +145,22 @@ public class ForbrukService {
         }
         return allCodes;
     }
+
+    private void move(Path file, String handledFileDir) {
+        log.info("file: {}, handledDir: {} ({})", file, handledFileDir, file.getFileName().toString());
+        String trimmedFileName = file.getFileName().toString().substring(0, file.getFileName().toString().lastIndexOf('.'));
+        String filePostFix = file.getFileName().toString().substring(file.getFileName().toString().lastIndexOf('.'));
+        Path movedFilePath = Paths.get(handledFileDir + trimmedFileName + "_" +
+                LocalDateTime.now().format(dateFormatter) + filePostFix );
+        log.info(movedFilePath.toString());
+        try {
+            Files.move(file, movedFilePath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Something wrong moving file {}, {}", file.getFileName().toString(), e.getMessage());
+        }
+
+    }
+
+
+
 }

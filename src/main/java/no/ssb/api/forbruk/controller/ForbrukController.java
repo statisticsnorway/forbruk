@@ -39,6 +39,12 @@ public class ForbrukController {
     @Value("${forbruk.filepath.result.filepostfix}")
     private String resultFilePostfix;
 
+    @Value("${resultat.fjern.element}")
+    String removeElements;
+
+    @Value("${forbruk.filepath.handled}")
+    String handledFileDir;
+
     @Autowired
     ForbrukService forbrukService;
 
@@ -51,7 +57,8 @@ public class ForbrukController {
         }
         log.info("kjør henting av forbruk-produkt");
         try {
-            forbrukService.retrieveProductInformation(productCodesFilePath, resultFilePath, resultFilePrefix, resultFilePostfix);
+            forbrukService.retrieveProductInformation(productCodesFilePath, resultFilePath, resultFilePrefix,
+                    resultFilePostfix, removeElements, handledFileDir);
             return new ResponseEntity<>("henting av forbruk-produkt ferdig", HttpStatus.OK);
         } catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
