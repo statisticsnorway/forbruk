@@ -3,16 +3,12 @@ package no.ssb.api.forbruk.service;
 import no.ssb.api.forbruk.repository.SsbVetduatRestRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.io.IOException;
@@ -81,9 +77,9 @@ public class ForbrukServiceTest {
             copyFile("codes1.csv");
             assertEquals(1, numberOfFilesInDir("config"));
 
-            when(ssbVetduatRestRepository.callSsbVetDuAt(anyString())).thenReturn(readResponseFromFile("response1.json"));
+            when(ssbVetduatRestRepository.callSsbVetDuAt(anyString(), anyString())).thenReturn(readResponseFromFile("response1.json"));
             String testResult = forbrukService.retrieveProductInformation(productCodesFilePath, resultFilePath, resultFilePrefix,
-                    resultFilePostfix, removeElements, handledFileDir);
+                    resultFilePostfix, "gtin", removeElements, handledFileDir);
             log.info("testResult: {}", testResult);
             assertEquals("OK", testResult);
 
@@ -108,9 +104,9 @@ public class ForbrukServiceTest {
             copyFile("codes2.csv");
             assertEquals(2, numberOfFilesInDir("config"));
 
-            when(ssbVetduatRestRepository.callSsbVetDuAt(anyString())).thenReturn(readResponseFromFile("response1.json"));
+            when(ssbVetduatRestRepository.callSsbVetDuAt(anyString(), anyString())).thenReturn(readResponseFromFile("response1.json"));
             String testResult = forbrukService.retrieveProductInformation(productCodesFilePath, resultFilePath, resultFilePrefix,
-                    resultFilePostfix, removeElements, handledFileDir);
+                    resultFilePostfix, "gtin", removeElements, handledFileDir);
             log.info("testResult: {}", testResult);
             assertEquals("OK", testResult);
 

@@ -33,13 +33,16 @@ public class ScheduledTasks {
     @Value("${forbruk.filepath.handled}")
     String handledFileDir;
 
+    @Value("${vetduat.default.codeType}")
+    private String defaultCodeType;
+
     @Autowired
     ForbrukService forbrukService;
 
     @Scheduled(cron = "${scheduled.cron.filsjekk}")
     public void runProductInfo() {
         forbrukService.retrieveProductInformation(productCodesFilePath, resultFilePath, resultFilePrefix,
-                resultFilePostfix, removeElements, handledFileDir);
+                resultFilePostfix, defaultCodeType, removeElements, handledFileDir);
     }
 
 

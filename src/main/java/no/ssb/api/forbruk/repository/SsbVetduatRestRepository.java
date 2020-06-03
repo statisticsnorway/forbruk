@@ -10,7 +10,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Set;
 
 @Service
 public class SsbVetduatRestRepository {
@@ -25,11 +24,11 @@ public class SsbVetduatRestRepository {
     @Value("${ssbvetduat.api.keys}")
     private String ssbVetduatApiKeys;
 
-    public String callSsbVetDuAt(String codes) {
+    public String callSsbVetDuAt(String codeType, String codes) {
         log.info("call ssb-vetduat-api med {}", codes);
         String result = "";
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(ssbVetduatUrl + ssbVetduatEndpoint + "/" + codes))
+                .uri(URI.create(ssbVetduatUrl + ssbVetduatEndpoint + "/" + codeType + "/" + codes))
                 .GET()
                 .header("Content-Type", "application/json")
                 .header("api_key", ssbVetduatApiKeys)

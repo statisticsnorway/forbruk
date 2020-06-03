@@ -9,7 +9,6 @@ import no.ssb.api.forbruk.repository.SsbVetduatRestRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -43,7 +42,7 @@ public class ForbrukService {
     final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-hh-mm-ss");
 
     public String retrieveProductInformation(String codefilesPath, String resultFileDir, String resultFilePrefix,
-                                             String resultFilePostfix, String removeElements, String handledFileDir) {
+                                             String resultFilePostfix, String codeType, String removeElements, String handledFileDir) {
         Instant start = Instant.now();
         log.info("*** start retrieve product information ***");
         log.info("løp gjennom alle filene i {}", codefilesPath);
@@ -52,7 +51,7 @@ public class ForbrukService {
         try(Stream<Path> walk = walk(Paths.get(codefilesPath))) {
             walk.filter(Files::isRegularFile)
                     .forEach(file -> {
-                        treatFile(resultFileDir, resultFilePrefix, resultFilePostfix, file, removeElements);
+                        treatFile(resultFileDir, resultFilePrefix, resultFilePostfix, file, codeType, removeElements);
                         move(file, handledFileDir);
                     });
 
@@ -64,7 +63,7 @@ public class ForbrukService {
         return "OK";
     }
 
-    private void treatFile(String resultFileDir, String resultFilePrefix, String resultFilePostfix, Path f, String removeElements) {
+    private void treatFile(String resultFileDir, String resultFilePrefix, String resultFilePostfix, Path f, String codeType, String removeElements) {
         Path resultFile = createProduktInfoFile(f.getFileName().toString(), resultFileDir, resultFilePrefix, resultFilePostfix);
         ArrayList<String> fileCodeList = getCodesFromFile(f);
         ArrayNode produkter = mapper.createArrayNode();
@@ -72,14 +71,14 @@ public class ForbrukService {
         //parallelStream øker ikke hastighet
         fileCodeList.forEach(codes -> {
             log.info("codes from file: {}", codes);
-            collectProductInformationForCodes(produkter, codes, removeElements);
+            collectProductInformationForCodes(produkter, codeType, codes, removeElements);
         });
         log.info("til fil - antall produkt: {}", produkter.size());
         addToProduktInfoFile(produkter, resultFile);
     }
 
-    private void collectProductInformationForCodes(ArrayNode produkter, String codes, String removeElements) {
-        String produktInfo = ssbVetduatRestRepository.callSsbVetDuAt(codes);
+    private void collectProductInformationForCodes(ArrayNode produkter, String codeTypes, String codes, String removeElements) {
+        String produktInfo = ssbVetduatRestRepository.callSsbVetDuAt(codeTypes, codes);
         try {
             JsonNode produktListe = mapper.readTree(produktInfo);
             if (produktListe.isArray()) {

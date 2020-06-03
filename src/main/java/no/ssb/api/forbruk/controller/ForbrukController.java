@@ -45,12 +45,25 @@ public class ForbrukController {
     @Value("${forbruk.filepath.handled}")
     String handledFileDir;
 
+    @Value("${vetduat.default.codeType}")
+    private String defaultCodeType;
+
     @Autowired
     ForbrukService forbrukService;
 
-    @ApiOperation(value = "Hent produktinformasjon")
-    @RequestMapping(value ="/produktinfo", method = RequestMethod.GET)
+    @ApiOperation(value = "Hent produktinformasjon for default kodetype (gtin)")
+    @GetMapping(value ="/produktinfo/")
     public ResponseEntity<String> produktinfo (@RequestHeader HttpHeaders header) {
+        return getProduktInfo(header, defaultCodeType);
+    }
+
+    @ApiOperation(value = "Hent produktinformasjon for kodetype")
+    @GetMapping(value ="/produktinfo/{codetype}")
+    public ResponseEntity<String> produktinfo (@RequestHeader HttpHeaders header, @RequestParam String codeType) {
+        return getProduktInfo(header, codeType);
+    }
+
+    private ResponseEntity<String> getProduktInfo(@RequestHeader HttpHeaders header, @RequestParam String codeType) {
         log.info("header: {}", header);
         if (!authorizeRequest(header)) {
             return new ResponseEntity<>("Unauthorized. Api-key er ugyldig eller mangler", HttpStatus.UNAUTHORIZED);
@@ -58,7 +71,7 @@ public class ForbrukController {
         log.info("kjør henting av forbruk-produkt");
         try {
             forbrukService.retrieveProductInformation(productCodesFilePath, resultFilePath, resultFilePrefix,
-                    resultFilePostfix, removeElements, handledFileDir);
+                    resultFilePostfix, codeType, removeElements, handledFileDir);
             return new ResponseEntity<>("henting av forbruk-produkt ferdig", HttpStatus.OK);
         } catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
