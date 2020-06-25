@@ -11,11 +11,11 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
-resources:
-  repositories:
-    - repository: templates
-      type: github
-      name: forbruk
+#resources:
+#  repositories:
+#    - repository: templates
+#      type: github
+#      name: forbruk
 #      endpoint: <insert name of service connection which has access to this repo>
 
 # Variables global to this pipeline
@@ -37,4 +37,4 @@ variables:
 # Job which runs mvn test and verify, Sonar Analysis (if branch is master), mvn install,
 # builds Docker image, pushes this to GCR and checks for any image vulnerabilities
 jobs:
-  - template: azure/jobs_testAndPushToNexus.yml@templates
+  - template: jobs_testAndPushToNexus.yml
