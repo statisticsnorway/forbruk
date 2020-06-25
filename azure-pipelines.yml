@@ -15,7 +15,7 @@ resources:
   repositories:
     - repository: templates
       type: github
-      name: forbruk
+      name: statisticsnorway/forbruk
       endpoint: statisticsnorway
 
 # Variables global to this pipeline
