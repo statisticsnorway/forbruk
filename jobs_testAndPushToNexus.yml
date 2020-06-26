@@ -15,24 +15,7 @@ jobs:
           mavenServiceConnections: 'mvnSsbBipPublic, mvnSsbBipReleases, mvnSsbBipSnapshots'
 
       # Maven test and verify
-      - task: Maven@3
-        displayName: 'Maven test and verify'
-        inputs:
-          mavenPomFile: 'pom.xml'
-          goals: 'verify test'
-          options: '-P ssb-bip,coverage --batch-mode'
-          publishJUnitResults: true
-          testResultsFiles: '**/TEST-*.xml'
-          codeCoverageToolOption: 'JaCoCo'
-          javaHomeOption: 'JDKVersion'
-          jdkVersionOption: '1.11'
-          mavenVersionOption: 'Default'
-          mavenOptions: '-Xmx3072m'
-          mavenAuthenticateFeed: false
-          effectivePomSkip: false
-          sonarQubeRunAnalysis: false
-          checkStyleRunAnalysis: true
-          pmdRunAnalysis: true
+      - template: step_test.yml
 
       # Run Maven Sonar Analysis
       - task: Maven@3
