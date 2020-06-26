@@ -1,3 +1,10 @@
+resources:
+  repositories:
+    - repository: steptemplates
+      type: github
+      name: statisticsnorway/forbruk
+      endpoint: statisticsnorway
+
 # Job which runs mvn test and verify, Sonar Analysis (if branch is master), mvn install,
 # builds Docker image, pushes this to GCR and checks for any image vulnerabilities
 jobs:
@@ -15,7 +22,7 @@ jobs:
           mavenServiceConnections: 'mvnSsbBipPublic, mvnSsbBipReleases, mvnSsbBipSnapshots'
 
       # Maven test and verify
-      - template: step_test.yml
+      - template: step_test.yml@steptemplates
 
       # Run Maven Sonar Analysis
       - task: Maven@3
