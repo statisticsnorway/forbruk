@@ -16,7 +16,7 @@ jobs:
           mavenServiceConnections: 'mvnSsbBipPublic, mvnSsbBipReleases, mvnSsbBipSnapshots'
 
       # Maven test and verify
-      - template: step_test.yml
+      - template: ./step_test.yml
 
       # Run Maven Sonar Analysis
       - task: Maven@3
