@@ -18,6 +18,9 @@ public class ScheduledTasks {
     @Value("${forbruk.filepath.codes}")
     private String productCodesFilePath;
 
+    @Value("${forbruk.filepath.generate}")
+    private String generateFilePath;
+
     @Value("${forbruk.filepath.result}")
     private String resultFilePath;
 
@@ -41,7 +44,7 @@ public class ScheduledTasks {
 
     @Scheduled(cron = "${scheduled.cron.filsjekk}")
     public void runProductInfo() {
-        forbrukService.retrieveProductInformation(productCodesFilePath, resultFilePath, resultFilePrefix,
+        forbrukService.retrieveProductInformation(productCodesFilePath, generateFilePath, resultFilePath, resultFilePrefix,
                 resultFilePostfix, defaultCodeType, removeElements, handledFileDir);
     }
 

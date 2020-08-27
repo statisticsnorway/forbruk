@@ -38,6 +38,9 @@ public class ForbrukServiceTest {
     @Value("${forbruk.filepath.codes}")
     private String productCodesFilePath;
 
+    @Value("${forbruk.filepath.generate}")
+    private String generateFilePath;
+
     @Value("${forbruk.filepath.result}")
     private String resultFilePath;
 
@@ -78,8 +81,8 @@ public class ForbrukServiceTest {
             assertEquals(1, numberOfFilesInDir("config"));
 
             when(ssbVetduatRestRepository.callSsbVetDuAt(anyString(), anyString())).thenReturn(readResponseFromFile("response1.json"));
-            String testResult = forbrukService.retrieveProductInformation(productCodesFilePath, resultFilePath, resultFilePrefix,
-                    resultFilePostfix, "gtin", removeElements, handledFileDir);
+            String testResult = forbrukService.retrieveProductInformation(productCodesFilePath, generateFilePath,
+                    resultFilePath, resultFilePrefix, resultFilePostfix, "gtin", removeElements, handledFileDir);
             log.info("testResult: {}", testResult);
             assertEquals("OK", testResult);
 
@@ -105,7 +108,8 @@ public class ForbrukServiceTest {
             assertEquals(2, numberOfFilesInDir("config"));
 
             when(ssbVetduatRestRepository.callSsbVetDuAt(anyString(), anyString())).thenReturn(readResponseFromFile("response1.json"));
-            String testResult = forbrukService.retrieveProductInformation(productCodesFilePath, resultFilePath, resultFilePrefix,
+            String testResult = forbrukService.retrieveProductInformation(productCodesFilePath, generateFilePath,
+                    resultFilePath, resultFilePrefix,
                     resultFilePostfix, "gtin", removeElements, handledFileDir);
             log.info("testResult: {}", testResult);
             assertEquals("OK", testResult);
