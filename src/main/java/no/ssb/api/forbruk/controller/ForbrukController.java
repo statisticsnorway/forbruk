@@ -30,6 +30,9 @@ public class ForbrukController {
     @Value("${forbruk.filepath.codes}")
     private String productCodesFilePath;
 
+    @Value("${forbruk.filepath.generate}")
+    private String generateFilePath;
+
     @Value("${forbruk.filepath.result}")
     private String resultFilePath;
 
@@ -70,7 +73,7 @@ public class ForbrukController {
         }
         log.info("kjør henting av forbruk-produkt");
         try {
-            forbrukService.retrieveProductInformation(productCodesFilePath, resultFilePath, resultFilePrefix,
+            forbrukService.retrieveProductInformation(productCodesFilePath, generateFilePath, resultFilePath, resultFilePrefix,
                     resultFilePostfix, codeType, removeElements, handledFileDir);
             return new ResponseEntity<>("henting av forbruk-produkt ferdig", HttpStatus.OK);
         } catch (Exception e){

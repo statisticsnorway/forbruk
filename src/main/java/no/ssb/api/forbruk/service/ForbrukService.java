@@ -41,7 +41,7 @@ public class ForbrukService {
 
     final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-hh-mm-ss");
 
-    public String retrieveProductInformation(String codefilesPath, String resultFileDir, String resultFilePrefix,
+    public String retrieveProductInformation(String codefilesPath, String generatedFileDir, String resultFileDir, String resultFilePrefix,
                                              String resultFilePostfix, String codeType, String removeElements, String handledFileDir) {
         Instant start = Instant.now();
         log.info("*** start retrieve product information ***");
@@ -51,8 +51,8 @@ public class ForbrukService {
         try(Stream<Path> walk = walk(Paths.get(codefilesPath))) {
             walk.filter(Files::isRegularFile)
                     .forEach(file -> {
-                        treatFile(resultFileDir, resultFilePrefix, resultFilePostfix, file, codeType, removeElements);
-                        move(file, handledFileDir);
+                        treatFile(generatedFileDir, resultFileDir, resultFilePrefix, resultFilePostfix, file, codeType, removeElements);
+                        moveHandledFile(file, handledFileDir);
                     });
 
         } catch (IOException ioe) {
@@ -63,9 +63,13 @@ public class ForbrukService {
         return "OK";
     }
 
-    private void treatFile(String resultFileDir, String resultFilePrefix, String resultFilePostfix, Path f, String codeType, String removeElements) {
+    private void treatFile(String generateFileDir, String resultFileDir, String resultFilePrefix,
+                           String resultFilePostfix, Path f, String codeType, String removeElements) {
         try {
-            Path resultFile = createProduktInfoFile(f.getFileName().toString(), resultFileDir, resultFilePrefix, resultFilePostfix);
+            String resultFileName = createProduktInfoFileName(
+                    f.getFileName().toString(), resultFilePrefix, resultFilePostfix);
+            Path generateFile = createProduktInfoFile(resultFileName, generateFileDir);
+            Path resultFile = createProduktInfoFile(resultFileName, resultFileDir);
             ArrayList<String> fileCodeList = getCodesFromFile(f);
             final ArrayNode[] produkter = {mapper.createArrayNode()};
 //                        fileCodeList.parallelStream().forEach(codes -> {
@@ -81,6 +85,7 @@ public class ForbrukService {
             });
             log.info("til fil - antall produkt: {}", produkter[0].size());
             addToProduktInfoFile(produkter[0], resultFile);
+            Files.move(generateFile, resultFile, StandardCopyOption.REPLACE_EXISTING);
         } catch (Exception e) {
             log.error("Something went wrong handling file {}: {}", f.toString(), e.getMessage());
         }
@@ -114,10 +119,9 @@ public class ForbrukService {
         return node;
     }
 
-    private Path createProduktInfoFile(String codefileName, String resultFileDir, String resultFilePrefix, String resultFilePostfix) {
-        log.info("codefilenName: {}, resultFilePath: {}, resultFilePrefix: {}", codefileName, resultFileDir, resultFilePrefix);
-        String trimmedCodefileName = codefileName.substring(0, codefileName.lastIndexOf('.'));
-        Path resultFilePath = Paths.get(resultFileDir + resultFilePrefix + trimmedCodefileName + "_" + LocalDateTime.now().format(dateFormatter) + resultFilePostfix);
+    private Path createProduktInfoFile(String fileName, String resultFileDir) {
+        log.info("fileName: {}, resultFilePath: {}", fileName, resultFileDir);
+        Path resultFilePath = Paths.get(resultFileDir + fileName);
         log.info(resultFilePath.toString());
         try {
             Files.createFile(resultFilePath);
@@ -125,6 +129,12 @@ public class ForbrukService {
             log.error("Something wrong creating file {}, {}", resultFilePath.getFileName(), e.getMessage());
         }
         return resultFilePath;
+    }
+
+    private String createProduktInfoFileName(String codefileName, String resultFilePrefix, String resultFilePostfix) {
+        log.info("codefilenName: {}, resultFilePath: {}, resultFilePrefix: {}", codefileName, resultFilePrefix);
+        String trimmedCodefileName = codefileName.substring(0, codefileName.lastIndexOf('.'));
+        return resultFilePrefix + trimmedCodefileName + "_" + LocalDateTime.now().format(dateFormatter) + resultFilePostfix;
     }
 
     private void addToProduktInfoFile(ArrayNode produktInfo, Path file) {
@@ -154,7 +164,7 @@ public class ForbrukService {
         return allCodes;
     }
 
-    private void move(Path file, String handledFileDir) {
+    private void moveHandledFile(Path file, String handledFileDir) {
         log.info("file: {}, handledDir: {} ({})", file, handledFileDir, file.getFileName().toString());
         String trimmedFileName = file.getFileName().toString().substring(0, file.getFileName().toString().lastIndexOf('.'));
         String filePostFix = file.getFileName().toString().substring(file.getFileName().toString().lastIndexOf('.'));
