@@ -133,7 +133,7 @@ public class ForbrukService {
             Files.writeString(file, produktInfo.toString(), StandardOpenOption.APPEND);
             log.info("filinnhold: {}", Files.readString(file));
         } catch (IOException e) {
-            log.error("Something writing produktinfo to file {}, {}", file.getFileName(), e.getMessage());
+            log.error("Something wrong writing produktinfo to file {}, {}", file.getFileName(), e.getMessage());
         }
     }
 
