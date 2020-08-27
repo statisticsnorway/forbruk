@@ -64,17 +64,26 @@ public class ForbrukService {
     }
 
     private void treatFile(String resultFileDir, String resultFilePrefix, String resultFilePostfix, Path f, String codeType, String removeElements) {
-        Path resultFile = createProduktInfoFile(f.getFileName().toString(), resultFileDir, resultFilePrefix, resultFilePostfix);
-        ArrayList<String> fileCodeList = getCodesFromFile(f);
-        ArrayNode produkter = mapper.createArrayNode();
+        try {
+            Path resultFile = createProduktInfoFile(f.getFileName().toString(), resultFileDir, resultFilePrefix, resultFilePostfix);
+            ArrayList<String> fileCodeList = getCodesFromFile(f);
+            final ArrayNode[] produkter = {mapper.createArrayNode()};
 //                        fileCodeList.parallelStream().forEach(codes -> {
-        //parallelStream øker ikke hastighet
-        fileCodeList.forEach(codes -> {
-            log.info("codes from file: {}", codes);
-            collectProductInformationForCodes(produkter, codeType, codes, removeElements);
-        });
-        log.info("til fil - antall produkt: {}", produkter.size());
-        addToProduktInfoFile(produkter, resultFile);
+            //parallelStream øker ikke hastighet
+            fileCodeList.forEach(codes -> {
+                log.info("codes from file: {}", codes);
+                collectProductInformationForCodes(produkter[0], codeType, codes, removeElements);
+                if (produkter[0].size() > 1000) {
+                    addToProduktInfoFile(produkter[0], resultFile);
+                    log.info("til fil - antall produkt: {}", produkter[0].size());
+                    produkter[0] = mapper.createArrayNode();
+                }
+            });
+            log.info("til fil - antall produkt: {}", produkter[0].size());
+            addToProduktInfoFile(produkter[0], resultFile);
+        } catch (Exception e) {
+            log.error("Something went wrong handling file {}: {}", f.toString(), e.getMessage());
+        }
     }
 
     private void collectProductInformationForCodes(ArrayNode produkter, String codeTypes, String codes, String removeElements) {
@@ -113,7 +122,7 @@ public class ForbrukService {
         try {
             Files.createFile(resultFilePath);
         } catch (IOException e) {
-            log.error("Something wrong writing file {}, {}", resultFilePath.getFileName(), e.getMessage());
+            log.error("Something wrong creating file {}, {}", resultFilePath.getFileName(), e.getMessage());
         }
         return resultFilePath;
     }
@@ -124,7 +133,7 @@ public class ForbrukService {
             Files.writeString(file, produktInfo.toString(), StandardOpenOption.APPEND);
             log.info("filinnhold: {}", Files.readString(file));
         } catch (IOException e) {
-            log.error("Something wrong writing file {}, {}", file.getFileName(), e.getMessage());
+            log.error("Something writing produktinfo to file {}, {}", file.getFileName(), e.getMessage());
         }
     }
 
