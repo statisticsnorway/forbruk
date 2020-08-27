@@ -69,7 +69,6 @@ public class ForbrukService {
             String resultFileName = createProduktInfoFileName(
                     f.getFileName().toString(), resultFilePrefix, resultFilePostfix);
             Path generateFile = createProduktInfoFile(resultFileName, generateFileDir);
-            Path resultFile = createProduktInfoFile(resultFileName, resultFileDir);
             ArrayList<String> fileCodeList = getCodesFromFile(f);
             final ArrayNode[] produkter = {mapper.createArrayNode()};
 //                        fileCodeList.parallelStream().forEach(codes -> {
@@ -78,13 +77,14 @@ public class ForbrukService {
                 log.info("codes from file: {}", codes);
                 collectProductInformationForCodes(produkter[0], codeType, codes, removeElements);
                 if (produkter[0].size() > 1000) {
-                    addToProduktInfoFile(produkter[0], resultFile);
+                    addToProduktInfoFile(produkter[0], generateFile);
                     log.info("til fil - antall produkt: {}", produkter[0].size());
                     produkter[0] = mapper.createArrayNode();
                 }
             });
             log.info("til fil - antall produkt: {}", produkter[0].size());
-            addToProduktInfoFile(produkter[0], resultFile);
+            addToProduktInfoFile(produkter[0], generateFile);
+            Path resultFile = createProduktInfoFile(resultFileName, resultFileDir);
             Files.move(generateFile, resultFile, StandardCopyOption.REPLACE_EXISTING);
         } catch (Exception e) {
             log.error("Something went wrong handling file {}: {}", f.toString(), e.getMessage());
