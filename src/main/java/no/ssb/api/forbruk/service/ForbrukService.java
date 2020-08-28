@@ -76,11 +76,11 @@ public class ForbrukService {
             fileCodeList.forEach(codes -> {
                 log.info("codes from file: {}", codes);
                 collectProductInformationForCodes(produkter[0], codeType, codes, removeElements);
-                if (produkter[0].size() > 1000) {
-                    addToProduktInfoFile(produkter[0], generateFile);
-                    log.info("til fil - antall produkt: {}", produkter[0].size());
-                    produkter[0] = mapper.createArrayNode();
-                }
+//                if (produkter[0].size() > 1000) {
+//                    log.info("til fil - antall produkt: {}", produkter[0].size());
+//                    addToProduktInfoFile(produkter[0], generateFile);
+//                    produkter[0] = mapper.createArrayNode();
+//                }
             });
             log.info("til fil - antall produkt: {}", produkter[0].size());
             addToProduktInfoFile(produkter[0], generateFile);
