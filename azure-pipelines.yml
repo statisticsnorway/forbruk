@@ -19,8 +19,8 @@ resources:
   repositories:
     - repository: templates
       type: github
-      name: statisticsnorway/azure-pipelines-templates@internal-projects
-      ref: refs/tags/0.0.3
+      name: statisticsnorway/azure-pipelines-templates
+      ref: internal-projects
       endpoint: github-Forbruksundersøkelsen
 
 # Pipeline will be run on this base image
