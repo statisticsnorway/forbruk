@@ -19,7 +19,7 @@ resources:
   repositories:
     - repository: templates
       type: github
-      name: statisticsnorway/azure-pipelines-templates
+      name: statisticsnorway/azure-pipelines-templates@internal-projects
       ref: refs/tags/0.0.3
       endpoint: github-Forbruksundersøkelsen
 
