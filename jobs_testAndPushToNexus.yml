@@ -12,14 +12,6 @@ parameters:
   - name: 'checkStyleRunAnalysis'
     default: 'true'
 
-resources:
-  repositories:
-    - repository: templates
-      type: github
-      name: statisticsnorway/azure-pipelines-templates
-      ref: refs/tags/0.0.3
-      endpoint: github-Forbruksundersøkelsen
-
 jobs:
   - job: buildTestPublishToPipeline
     displayName: 'Test/build app and Dockerimage'
@@ -30,7 +22,7 @@ jobs:
     steps:
       # Authenticate Maven to Nexus using predefined Service Connections
       # (Project Settings->Pipelines->Service Connections)
-      - template: maven/task-maven-complete.yml@templates
+      - template: maven/task-maven-complete.yml@{{parameters.templates}}
         parameters:
           checkStyleRunAnalysis: ${{ parameters.checkStyleRunAnalysis }}
 
