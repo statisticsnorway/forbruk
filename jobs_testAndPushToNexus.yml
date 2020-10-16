@@ -1,56 +1,32 @@
-
 # Job which runs mvn test and verify, Sonar Analysis (if branch is master), mvn install,
 # builds Docker image, pushes this to GCR and checks for any image vulnerabilities
+parameters:
+  - name: 'project'
+    default: ''
+  - name: 'repoName'
+    default: ''
+  - name: 'artifactName'
+    default: ''
+  - name: 'mavenContainer'
+    default: 'maven:3-jdk-11'
+  - name: 'checkStyleRunAnalysis'
+    default: 'true'
+
 jobs:
-  - job: buildTestBuildPush
-    displayName: 'Test/build app'
+  - job: buildTestPublishToPipeline
+    displayName: 'Test/build app and Dockerimage'
+    container: ${{ parameters.mavenContainer }}
     # Job condition: Run these jobs on any branch, but not on tags
     condition: not(startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
     # Steps in this Job
     steps:
       # Authenticate Maven to Nexus using predefined Service Connections
       # (Project Settings->Pipelines->Service Connections)
-      - task: MavenAuthenticate@0
-        displayName: 'Maven authenticate'
-        inputs:
-          mavenServiceConnections: 'mvnSsbBipPublic, mvnSsbBipReleases, mvnSsbBipSnapshots'
+      - template: ${{variables['System.DefaultWorkingDirectory']}}/maven/task-maven-complete.yml
+        parameters:
+          checkStyleRunAnalysis: ${{ parameters.checkStyleRunAnalysis }}
 
-      # Maven test and verify
-      - template: ./step_test.yml
-
-      # Run Maven Sonar Analysis
-      - task: Maven@3
-        displayName: 'Maven Sonar Analysis'
-        # Task condition: We have community edition of SonarQube which only scans master-branch so
-        # it makes no sense running this tag when branch is other than master
-        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-        inputs:
-          mavenPomFile: 'pom.xml'
-          goals: 'sonar:sonar'
-          options: '-X -Dsonar.host.url=$(SONAR_HOST) -Dsonar.login=$(SONAR_TOKEN) sonar:sonar -P ssb-bip,coverage -Dmaven.javadoc.skip=true --batch-mode '
-          publishJUnitResults: false
-          testResultsFiles: '**/TEST-*.xml'
-          javaHomeOption: 'JDKVersion'
-          jdkVersionOption: '1.11'
-          mavenVersionOption: 'Default'
-          mavenOptions: '-Xmx3072m'
-          mavenAuthenticateFeed: false
-          effectivePomSkip: false
-          sonarQubeRunAnalysis: false
-          checkStyleRunAnalysis: false
-          pmdRunAnalysis: false
-          findBugsRunAnalysis: false
-
-      # Deploy artifact to Nexus
-      - task: Maven@3
-        displayName: 'Maven install and deploy'
-        inputs:
-          mavenPomFile: 'pom.xml'
-          mavenOptions: '-Xmx3072m'
-          javaHomeOption: 'JDKVersion'
-          jdkVersionOption: '1.11'
-          jdkArchitectureOption: 'x64'
-          publishJUnitResults: false
-          testResultsFiles: '**/TEST-*.xml'
-          goals: 'deploy'
-          options: '-DskipTests=true -Dmaven.javadoc.skip=true -P ssb-bip --batch-mode'
+      # Publish pipeline artifact
+      - publish: target
+        displayName: 'Publish artifact to pipeline'
+        artifact: ${{ parameters.artifactName }}
