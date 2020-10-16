@@ -12,6 +12,14 @@ parameters:
   - name: 'checkStyleRunAnalysis'
     default: 'true'
 
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      name: statisticsnorway/azure-pipelines-templates
+      ref: refs/tags/0.0.3
+      endpoint: github-Forbruksundersøkelsen
+
 jobs:
   - job: buildTestPublishToPipeline
     displayName: 'Test/build app and Dockerimage'
