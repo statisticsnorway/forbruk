@@ -33,11 +33,6 @@ variables:
   # Variables defined in Pipelines->Library->Variable Groups in your project in
   # Azure Pipelines
   - group: Hemmeligheter
-  # Variables defined here
-#  - name: fullSha
-#    value: '$(Build.SourceVersion)'
-#  - name: repoName
-#    value: 'prod-bip/ssb/forbruk/forbruk'
   - name:  MAVEN_CACHE_FOLDER
     value: $(Pipeline.Workspace)/.m2/repository
   - name: MAVEN_OPTS
@@ -46,8 +41,7 @@ variables:
 # Job which runs mvn test and verify, Sonar Analysis (if branch is master), mvn install,
 # builds Docker image, pushes this to GCR and checks for any image vulnerabilities
 jobs:
-  - template: jobs_testAndPushToNexus.yml
+  - template: complete-builds/job-test-nexus.yml@templates
     parameters:
       project: forbruk
-#      repoName: $(repoName)
       artifactName: forbruk
