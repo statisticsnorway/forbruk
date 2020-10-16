@@ -22,7 +22,7 @@ jobs:
     steps:
       # Authenticate Maven to Nexus using predefined Service Connections
       # (Project Settings->Pipelines->Service Connections)
-      - template: ${{variables['System.DefaultWorkingDirectory']}}/maven/task-maven-complete.yml
+      - template: maven/task-maven-complete.yml@templates
         parameters:
           checkStyleRunAnalysis: ${{ parameters.checkStyleRunAnalysis }}
 
