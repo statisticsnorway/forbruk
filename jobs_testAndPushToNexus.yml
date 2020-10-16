@@ -11,6 +11,7 @@ parameters:
     default: 'maven:3-jdk-11'
   - name: 'checkStyleRunAnalysis'
     default: 'true'
+  - name: 'templates'
 
 jobs:
   - job: buildTestPublishToPipeline
@@ -22,7 +23,7 @@ jobs:
     steps:
       # Authenticate Maven to Nexus using predefined Service Connections
       # (Project Settings->Pipelines->Service Connections)
-      - template: maven/task-maven-complete.yml@${{parameters.templates}}
+      - template: maven/task-maven-complete.yml@${{ parameters.templates }}
         parameters:
           checkStyleRunAnalysis: ${{ parameters.checkStyleRunAnalysis }}
 
